@@ -42,6 +42,25 @@ docker build -f apps/web/Dockerfile \
 | `*_MODEL` | api | sensible defaults | per-provider model override |
 | `NEXT_PUBLIC_API_URL` / `NEXT_PUBLIC_SOCKET_URL` | web (build) | `http://localhost:4000` | inlined at build |
 
+## Split deploy: Vercel (web) + container host (api)
+
+The web app and API deploy **separately** — this is the recommended production topology.
+
+### Web → Vercel
+The API is a long-lived Fastify + Socket.IO process and **cannot run on Vercel serverless functions**. Deploy only `apps/web` to Vercel:
+
+1. Import the repo in Vercel and set **Root Directory = `apps/web`** (Project → Settings → General). This is the critical step — pointing Vercel at the repo root or `apps/api` will try to build the wrong package.
+2. Vercel auto-detects Next.js; keep the default build command. It resolves the pnpm workspace (including `@atlas/shared`) automatically.
+3. Add environment variables:
+   - `NEXT_PUBLIC_API_URL` = your deployed API URL (e.g. `https://atlas-api.onrender.com`)
+   - `NEXT_PUBLIC_SOCKET_URL` = same URL
+4. Deploy.
+
+### API → Render / Fly.io / Railway / Cloud Run
+Use the provided `apps/api/Dockerfile` (build context = repo root). A one-click **Render blueprint** is included at [`render.yaml`](../render.yaml): set `CORS_ORIGINS` to your Vercel web origin, optionally add a provider key, deploy. The API runs fully in offline simulator mode with no keys.
+
+> After both are up, set the API's `CORS_ORIGINS` to the Vercel origin and the web's `NEXT_PUBLIC_API_URL`/`NEXT_PUBLIC_SOCKET_URL` to the API origin.
+
 ## Production notes
 - Put the API behind a TLS-terminating proxy; keep `trustProxy` on for correct rate-limit attribution.
 - For multiple API instances, externalise cache + rate-limit to Redis and use the Socket.IO Redis adapter so realtime fans out across nodes.

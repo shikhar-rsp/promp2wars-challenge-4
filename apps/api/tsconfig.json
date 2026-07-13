@@ -6,7 +6,11 @@
     "types": ["node"],
     "module": "NodeNext",
     "moduleResolution": "NodeNext",
-    "exactOptionalPropertyTypes": false
+    "exactOptionalPropertyTypes": false,
+    // Include DOM so the global `fetch`/`Response` used by the AI providers
+    // (compiled from @atlas/ai-core sources) type consistently in CI, where
+    // @types/node is not hoisted. See packages/ai-core/tsconfig.json.
+    "lib": ["ES2022", "DOM", "DOM.Iterable"]
   },
   "include": ["src/**/*.ts"],
   "exclude": ["node_modules", "dist", "**/*.test.ts"]

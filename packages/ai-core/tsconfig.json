@@ -3,7 +3,11 @@
   "compilerOptions": {
     "outDir": "./dist",
     "rootDir": "./src",
-    "types": ["node"]
+    "types": ["node"],
+    // DOM provides a complete `fetch`/`Response` typing that resolves the same
+    // way regardless of how @types/node's undici types are hoisted — this keeps
+    // the build deterministic across local (hoisted) and CI (strict) installs.
+    "lib": ["ES2022", "DOM", "DOM.Iterable"]
   },
   "include": ["src/**/*.ts"],
   "exclude": ["node_modules", "dist", "**/*.test.ts"]

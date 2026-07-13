@@ -1,0 +1,31 @@
+# Render Blueprint for the ATLAS API (Fastify + Socket.IO).
+#
+# The API is a long-lived, stateful process (it owns the simulation loop and
+# WebSocket connections) so it CANNOT run on Vercel's serverless functions —
+# host it here (or any container host: Fly.io, Railway, Cloud Run) and deploy
+# the web app (apps/web) to Vercel pointing NEXT_PUBLIC_API_URL at this service.
+services:
+  - type: web
+    name: atlas-api
+    runtime: docker
+    dockerfilePath: ./apps/api/Dockerfile
+    dockerContext: .
+    plan: free
+    healthCheckPath: /health
+    envVars:
+      - key: API_PORT
+        value: 4000
+      - key: NODE_ENV
+        value: production
+      # Set to your deployed Vercel web origin (comma-separated for multiple).
+      - key: CORS_ORIGINS
+        value: https://your-atlas-web.vercel.app
+      # Optional — enables live AI. Leave unset to run in offline simulator mode.
+      - key: OPENROUTER_API_KEY
+        sync: false
+      - key: GROQ_API_KEY
+        sync: false
+      - key: CEREBRAS_API_KEY
+        sync: false
+      - key: GEMINI_API_KEY
+        sync: false
