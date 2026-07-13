@@ -1,0 +1,108 @@
+@tailwind base;
+@tailwind components;
+@tailwind utilities;
+
+/**
+ * ATLAS palette. A restrained "operations" aesthetic: near-neutral surfaces,
+ * a single teal signal accent, and a semantic severity ramp shared by badges,
+ * the heatmap and the decision feed. Both themes are tuned for WCAG AA contrast.
+ */
+:root {
+  --font-sans: 'Inter', system-ui, sans-serif;
+  --font-mono: 'JetBrains Mono', ui-monospace, monospace;
+  --radius: 0.75rem;
+
+  --background: 210 20% 98%;
+  --foreground: 222 24% 12%;
+  --card: 0 0% 100%;
+  --card-foreground: 222 24% 12%;
+  --popover: 0 0% 100%;
+  --popover-foreground: 222 24% 12%;
+  --muted: 214 20% 94%;
+  --muted-foreground: 220 12% 42%;
+  --accent: 214 22% 92%;
+  --accent-foreground: 222 24% 16%;
+  --border: 214 18% 88%;
+  --input: 214 18% 88%;
+  --ring: 174 62% 40%;
+
+  --signal: 174 64% 38%;
+  --signal-foreground: 0 0% 100%;
+
+  --sev-info: 214 20% 55%;
+  --sev-low: 152 45% 42%;
+  --sev-medium: 42 92% 48%;
+  --sev-high: 24 90% 52%;
+  --sev-critical: 358 70% 52%;
+}
+
+.dark {
+  --background: 222 30% 7%;
+  --foreground: 210 20% 94%;
+  --card: 222 26% 10%;
+  --card-foreground: 210 20% 94%;
+  --popover: 222 26% 10%;
+  --popover-foreground: 210 20% 94%;
+  --muted: 222 20% 15%;
+  --muted-foreground: 214 14% 62%;
+  --accent: 222 20% 16%;
+  --accent-foreground: 210 20% 94%;
+  --border: 222 18% 18%;
+  --input: 222 18% 20%;
+  --ring: 174 64% 46%;
+
+  --signal: 172 70% 45%;
+  --signal-foreground: 222 40% 6%;
+
+  --sev-info: 214 16% 60%;
+  --sev-low: 152 46% 50%;
+  --sev-medium: 42 90% 56%;
+  --sev-high: 24 90% 58%;
+  --sev-critical: 358 74% 60%;
+}
+
+* {
+  border-color: hsl(var(--border));
+}
+
+body {
+  background: hsl(var(--background));
+  color: hsl(var(--foreground));
+  font-family: var(--font-sans);
+  -webkit-font-smoothing: antialiased;
+  text-rendering: optimizeLegibility;
+}
+
+/* Subtle grid backdrop used behind the tactical map and hero. */
+.bg-grid {
+  background-image:
+    linear-gradient(hsl(var(--border) / 0.5) 1px, transparent 1px),
+    linear-gradient(90deg, hsl(var(--border) / 0.5) 1px, transparent 1px);
+  background-size: 32px 32px;
+}
+
+/* Respect users who prefer reduced motion (accessibility). */
+@media (prefers-reduced-motion: reduce) {
+  *,
+  *::before,
+  *::after {
+    animation-duration: 0.001ms !important;
+    animation-iteration-count: 1 !important;
+    transition-duration: 0.001ms !important;
+  }
+}
+
+/* Visible focus ring for keyboard users everywhere. */
+:focus-visible {
+  outline: 2px solid hsl(var(--ring));
+  outline-offset: 2px;
+}
+
+/* Thin, themed scrollbars for the dense panels. */
+.scroll-thin::-webkit-scrollbar {
+  width: 8px;
+}
+.scroll-thin::-webkit-scrollbar-thumb {
+  background: hsl(var(--border));
+  border-radius: 9999px;
+}

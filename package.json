@@ -1,0 +1,28 @@
+{
+  "name": "atlas-stadium-intelligence",
+  "version": "1.0.0",
+  "private": true,
+  "description": "ATLAS — AI-powered Stadium Intelligence & Decision Platform for FIFA World Cup 2026",
+  "license": "MIT",
+  "packageManager": "pnpm@10.33.2",
+  "engines": {
+    "node": ">=20"
+  },
+  "scripts": {
+    "dev": "pnpm --parallel --filter \"./apps/*\" dev",
+    "dev:web": "pnpm --filter @atlas/web dev",
+    "dev:api": "pnpm --filter @atlas/api dev",
+    "build": "pnpm -r build",
+    "lint": "pnpm -r lint",
+    "typecheck": "pnpm -r typecheck",
+    "test": "pnpm -r test",
+    "test:e2e": "pnpm --filter @atlas/web test:e2e",
+    "format": "prettier --write \"**/*.{ts,tsx,md,json}\"",
+    "clean": "pnpm -r exec rm -rf dist .next node_modules && rm -rf node_modules"
+  },
+  "devDependencies": {
+    "@types/node": "^22.10.5",
+    "prettier": "^3.4.2",
+    "typescript": "^5.7.3"
+  }
+}
