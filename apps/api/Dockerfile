@@ -16,7 +16,8 @@ RUN pnpm install --prod=false
 
 ENV NODE_ENV=production
 EXPOSE 4000
+# Honour a platform-injected $PORT (Render/Railway/Fly) and fall back to 4000.
 HEALTHCHECK --interval=30s --timeout=3s --retries=3 \
-  CMD node -e "fetch('http://localhost:4000/health').then(r=>process.exit(r.ok?0:1)).catch(()=>process.exit(1))"
+  CMD node -e "fetch('http://localhost:'+(process.env.PORT||4000)+'/health').then(r=>process.exit(r.ok?0:1)).catch(()=>process.exit(1))"
 
 CMD ["pnpm", "--filter", "@atlas/api", "start"]

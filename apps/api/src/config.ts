@@ -10,6 +10,10 @@ loadEnv();
  * in a request handler. Secrets live only here and never leave the server.
  */
 const EnvSchema = z.object({
+  // Most PaaS hosts (Render, Railway, Fly, Cloud Run, Heroku) inject `PORT` and
+  // route to whatever the app listens on there. Prefer it, then our own
+  // API_PORT, then a dev default — so the same image runs everywhere unchanged.
+  PORT: z.coerce.number().int().positive().optional(),
   API_PORT: z.coerce.number().int().positive().default(4000),
   API_HOST: z.string().default('0.0.0.0'),
   CORS_ORIGINS: z.string().default('http://localhost:3000'),
@@ -35,6 +39,8 @@ if (!parsed.success) {
 
 export const config = {
   ...parsed.data,
+  /** Effective listen port: platform-provided PORT wins, else API_PORT. */
+  port: parsed.data.PORT ?? parsed.data.API_PORT,
   corsOrigins: parsed.data.CORS_ORIGINS.split(',')
     .map((o) => o.trim())
     .filter(Boolean),

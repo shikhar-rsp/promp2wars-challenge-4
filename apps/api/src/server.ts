@@ -69,7 +69,7 @@ async function bootstrap(): Promise<void> {
   });
 
   // --- Start -----------------------------------------------------------------
-  await app.listen({ port: config.API_PORT, host: config.API_HOST });
+  await app.listen({ port: config.port, host: config.API_HOST });
   const io = attachRealtime(app.server, state, config.corsOrigins);
   state.start();
 

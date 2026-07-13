@@ -13,8 +13,7 @@ services:
     plan: free
     healthCheckPath: /health
     envVars:
-      - key: API_PORT
-        value: 4000
+      # Render injects PORT automatically; the API listens on it.
       - key: NODE_ENV
         value: production
       # Set to your deployed Vercel web origin (comma-separated for multiple).
