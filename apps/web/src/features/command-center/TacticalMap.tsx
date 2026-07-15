@@ -2,20 +2,9 @@
 
 import { DENSITY_COLORS, densityLevel, type CrowdReading, type Stadium } from '@atlas/shared';
 import { useMemo } from 'react';
+import { MAP_VIEW, nodeRadius, projectZones, uniqueEdges } from './mapGeometry';
 
-const VIEW = { w: 800, h: 640, pad: 48 };
-
-/** Project a lng/lat onto the SVG canvas using the stadium bounds. */
-function project(stadium: Stadium): (lng: number, lat: number) => { x: number; y: number } {
-  const [sw, ne] = stadium.bounds;
-  const spanLng = ne.lng - sw.lng || 1e-6;
-  const spanLat = ne.lat - sw.lat || 1e-6;
-  return (lng, lat) => ({
-    x: VIEW.pad + ((lng - sw.lng) / spanLng) * (VIEW.w - 2 * VIEW.pad),
-    // Invert Y: higher latitude = up.
-    y: VIEW.pad + (1 - (lat - sw.lat) / spanLat) * (VIEW.h - 2 * VIEW.pad),
-  });
-}
+const VIEW = { w: MAP_VIEW.width, h: MAP_VIEW.height, pad: MAP_VIEW.pad };
 
 const LABELLED_KINDS = new Set(['gate', 'transport', 'medical', 'exit', 'accessibility']);
 
@@ -38,33 +27,9 @@ export function TacticalMap({
   selectedZoneId: string | null;
   onSelectZone: (zoneId: string) => void;
 }) {
-  const proj = useMemo(() => project(stadium), [stadium]);
-  const readingByZone = useMemo(
-    () => new Map(readings.map((r) => [r.zoneId, r])),
-    [readings],
-  );
-  const points = useMemo(
-    () =>
-      new Map(
-        stadium.zones.map((z) => [z.id, proj(z.center.lng, z.center.lat)] as const),
-      ),
-    [stadium, proj],
-  );
-
-  // De-duplicate undirected edges for the connectivity underlay.
-  const edges = useMemo(() => {
-    const seen = new Set<string>();
-    const out: Array<[string, string]> = [];
-    for (const zone of stadium.zones) {
-      for (const other of zone.connectedZoneIds) {
-        const key = [zone.id, other].sort().join('|');
-        if (seen.has(key)) continue;
-        seen.add(key);
-        out.push([zone.id, other]);
-      }
-    }
-    return out;
-  }, [stadium]);
+  const readingByZone = useMemo(() => new Map(readings.map((r) => [r.zoneId, r])), [readings]);
+  const points = useMemo(() => projectZones(stadium), [stadium]);
+  const edges = useMemo(() => uniqueEdges(stadium), [stadium]);
 
   return (
     <svg
@@ -118,7 +83,7 @@ export function TacticalMap({
         const density = reading?.density ?? 0;
         const level = densityLevel(density);
         const color = DENSITY_COLORS[level];
-        const radius = 9 + Math.min(22, Math.sqrt(zone.capacity) / 12);
+        const radius = nodeRadius(zone.capacity);
         const selected = zone.id === selectedZoneId;
         const critical = level === 'critical';
         const label = LABELLED_KINDS.has(zone.kind) ? zone.name.replace(/ .*/, '') : '';

@@ -14,7 +14,7 @@ import {
   Users,
   X,
 } from 'lucide-react';
-import { useState } from 'react';
+import { memo, useState } from 'react';
 import { Button } from '@/components/ui/button';
 import { api } from '@/lib/api';
 import { cn } from '@/lib/utils';
@@ -36,7 +36,7 @@ function priorityTone(priority: number): string {
   return 'text-sev-low';
 }
 
-function DecisionCard({
+const DecisionCard = memo(function DecisionCard({
   decision,
   onUpdated,
 }: {
@@ -154,7 +154,7 @@ function DecisionCard({
       </div>
     </motion.article>
   );
-}
+});
 
 /** The ranked, live Decision Feed — ATLAS's signature surface. */
 export function DecisionFeed({

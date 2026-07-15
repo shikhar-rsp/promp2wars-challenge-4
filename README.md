@@ -2,7 +2,7 @@
 
 ![CI](https://github.com/shikhar-rsp/promp2wars-challenge-4/actions/workflows/ci.yml/badge.svg)
 ![TypeScript](https://img.shields.io/badge/TypeScript-strict-3178c6)
-![Tests](https://img.shields.io/badge/tests-54_passing-2ea44f)
+![Tests](https://img.shields.io/badge/tests-63_passing-2ea44f)
 ![License](https://img.shields.io/badge/license-MIT-blue)
 
 > An AI **chief-of-staff** for FIFA World Cup 2026 stadium operations. Not a chatbot — a live stream of ranked, explainable operational **decisions**.
@@ -136,7 +136,7 @@ Response caching + request dedup + conversation-scoped prompts minimise API spen
 ## Testing
 
 ```bash
-pnpm test            # all Vitest unit/integration suites (47 tests)
+pnpm test            # all Vitest unit/integration suites (63 tests)
 pnpm test:e2e        # Playwright smoke flows (run `pnpm --filter @atlas/web exec playwright install` first)
 pnpm typecheck       # strict TS across every package
 ```

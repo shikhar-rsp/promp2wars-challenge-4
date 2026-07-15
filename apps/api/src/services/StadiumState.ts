@@ -1,4 +1,3 @@
-import { EventEmitter } from 'node:events';
 import type { AIService, ProviderMetrics } from '@atlas/ai-core';
 import {
   MatchSimulator,
@@ -9,9 +8,23 @@ import {
   type Stadium,
   type Zone,
 } from '@atlas/shared';
+import { TypedEventEmitter } from '../lib/TypedEventEmitter.js';
 import { logger } from '../logger.js';
 import { DecisionEngine } from './DecisionEngine.js';
 import { IncidentTriage } from './IncidentTriage.js';
+
+/** Tunables for the live simulation loop, named to avoid magic numbers. */
+const SIMULATION = {
+  /** Max incidents retained in the rolling in-memory buffer. */
+  incidentBufferSize: 60,
+  defaultTickMs: 4_000,
+  defaultMinutesPerTick: 2,
+  /** Match-clock bounds: start pre-match and loop after full egress. */
+  kickoffStartMinutes: 90,
+  egressEndMinutes: -120,
+  loopRestartMinutes: 120,
+  seed: 20260719,
+} as const;
 
 export interface StadiumSnapshot {
   stadium: Stadium;
@@ -23,12 +36,13 @@ export interface StadiumSnapshot {
   updatedAt: number;
 }
 
-export interface StateEvents {
-  crowd: (readings: CrowdReading[]) => void;
-  incident: (incident: Incident) => void;
-  decisions: (decisions: Decision[]) => void;
-  clock: (payload: { phase: MatchPhase; minutesToKickoff: number }) => void;
-}
+/** Typed event map: event name → listener argument tuple. */
+export type StateEvents = {
+  crowd: [readings: CrowdReading[]];
+  incident: [incident: Incident];
+  decisions: [decisions: Decision[]];
+  clock: [payload: { phase: MatchPhase; minutesToKickoff: number }];
+};
 
 /**
  * The single source of live truth for the venue. It owns the match clock and
@@ -39,7 +53,8 @@ export interface StateEvents {
  * Everything is in-memory and event-driven — Supabase persistence can be added
  * behind the same interface without touching the simulation loop.
  */
-export class StadiumState extends EventEmitter {
+export class StadiumState {
+  private readonly events = new TypedEventEmitter<StateEvents>();
   private readonly simulator: MatchSimulator;
   private readonly triage: IncidentTriage;
   private readonly engine: DecisionEngine;
@@ -48,7 +63,7 @@ export class StadiumState extends EventEmitter {
   private readings: CrowdReading[] = [];
   private incidents: Incident[] = [];
   private decisions: Decision[] = [];
-  private minutesToKickoff = 90;
+  private minutesToKickoff: number = SIMULATION.kickoffStartMinutes;
   private timer: NodeJS.Timeout | undefined;
 
   constructor(
@@ -56,17 +71,25 @@ export class StadiumState extends EventEmitter {
     private readonly ai: AIService,
     private readonly options: { tickMs?: number; minutesPerTick?: number; seed?: number } = {},
   ) {
-    super();
-    this.simulator = new MatchSimulator(stadium, { seed: options.seed ?? 20260719 });
+    this.simulator = new MatchSimulator(stadium, { seed: options.seed ?? SIMULATION.seed });
     this.triage = new IncidentTriage(ai);
     this.engine = new DecisionEngine(ai);
     this.zoneIndex = new Map(stadium.zones.map((z) => [z.id, z]));
   }
 
+  /** Subscribe to a typed state event. Returns `this` for chaining. */
+  on<K extends keyof StateEvents & string>(
+    event: K,
+    listener: (...args: StateEvents[K]) => void,
+  ): this {
+    this.events.on(event, listener);
+    return this;
+  }
+
   /** Begin the simulation loop. Idempotent. */
   start(): void {
     if (this.timer) return;
-    const tickMs = this.options.tickMs ?? 4000;
+    const tickMs = this.options.tickMs ?? SIMULATION.defaultTickMs;
     // Prime once synchronously so the first HTTP request has data.
     void this.tick();
     this.timer = setInterval(() => void this.tick(), tickMs);
@@ -110,8 +133,8 @@ export class StadiumState extends EventEmitter {
   async report(incident: Incident): Promise<Incident> {
     const zone = this.zoneIndex.get(incident.zoneId);
     const triaged = await this.triage.triage(incident, zone);
-    this.incidents = [triaged, ...this.incidents].slice(0, 60);
-    this.emit('incident', triaged);
+    this.incidents = [triaged, ...this.incidents].slice(0, SIMULATION.incidentBufferSize);
+    this.events.emit('incident', triaged);
     await this.refreshDecisions();
     return triaged;
   }
@@ -120,7 +143,7 @@ export class StadiumState extends EventEmitter {
     const updated = this.engine.setStatus(id, status);
     if (updated) {
       this.decisions = this.engine.current();
-      this.emit('decisions', this.decisions);
+      this.events.emit('decisions', this.decisions);
     }
     return updated;
   }
@@ -131,19 +154,19 @@ export class StadiumState extends EventEmitter {
     const now = Date.now();
     const { readings, incidents } = this.simulator.tick(this.minutesToKickoff, now);
     this.readings = readings;
-    this.emit('crowd', readings);
+    this.events.emit('crowd', readings);
 
     // Triage and store any newly generated incidents.
     for (const incident of incidents) {
       const zone = this.zoneIndex.get(incident.zoneId);
       const triaged = await this.triage.triage(incident, zone);
-      this.incidents = [triaged, ...this.incidents].slice(0, 60);
-      this.emit('incident', triaged);
+      this.incidents = [triaged, ...this.incidents].slice(0, SIMULATION.incidentBufferSize);
+      this.events.emit('incident', triaged);
     }
 
     await this.refreshDecisions();
     this.advanceClock();
-    this.emit('clock', {
+    this.events.emit('clock', {
       phase: this.simulator.phaseFor(this.minutesToKickoff),
       minutesToKickoff: this.minutesToKickoff,
     });
@@ -152,13 +175,15 @@ export class StadiumState extends EventEmitter {
   private async refreshDecisions(): Promise<void> {
     const openIncidents = this.incidents.filter((i) => i.status !== 'resolved');
     this.decisions = await this.engine.evaluate(this.readings, openIncidents, this.zoneIndex, Date.now());
-    this.emit('decisions', this.decisions);
+    this.events.emit('decisions', this.decisions);
   }
 
   private advanceClock(): void {
-    const step = this.options.minutesPerTick ?? 2;
+    const step = this.options.minutesPerTick ?? SIMULATION.defaultMinutesPerTick;
     this.minutesToKickoff -= step;
     // Loop the match day so a demo runs indefinitely.
-    if (this.minutesToKickoff < -120) this.minutesToKickoff = 120;
+    if (this.minutesToKickoff < SIMULATION.egressEndMinutes) {
+      this.minutesToKickoff = SIMULATION.loopRestartMinutes;
+    }
   }
 }
