@@ -27,7 +27,14 @@ async function bootstrap(): Promise<void> {
   });
 
   // --- Security middleware ---------------------------------------------------
-  await app.register(helmet, { contentSecurityPolicy: false });
+  // The API serves only JSON, so a maximally strict CSP is safe and removes any
+  // ambiguity for security scanners. Helmet also sets HSTS, X-Frame-Options,
+  // nosniff, etc. by default.
+  await app.register(helmet, {
+    contentSecurityPolicy: {
+      directives: { defaultSrc: ["'none'"], frameAncestors: ["'none'"] },
+    },
+  });
   await app.register(cors, { origin: config.corsOrigins, credentials: true });
   await app.register(rateLimit, {
     max: 120,

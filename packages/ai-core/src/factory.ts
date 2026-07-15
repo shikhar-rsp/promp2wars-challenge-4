@@ -8,14 +8,17 @@ import { PromptGuard } from './security/PromptGuard.js';
 import type { AIProvider } from './types.js';
 
 export interface AIEnv {
-  OPENROUTER_API_KEY?: string;
-  GROQ_API_KEY?: string;
-  CEREBRAS_API_KEY?: string;
-  GEMINI_API_KEY?: string;
-  OPENROUTER_MODEL?: string;
-  GROQ_MODEL?: string;
-  CEREBRAS_MODEL?: string;
-  GEMINI_MODEL?: string;
+  // Values come from `process.env`, so a present-but-undefined key is valid —
+  // hence `| undefined` rather than a bare optional (which, under
+  // exactOptionalPropertyTypes, would forbid passing an explicit undefined).
+  OPENROUTER_API_KEY?: string | undefined;
+  GROQ_API_KEY?: string | undefined;
+  CEREBRAS_API_KEY?: string | undefined;
+  GEMINI_API_KEY?: string | undefined;
+  OPENROUTER_MODEL?: string | undefined;
+  GROQ_MODEL?: string | undefined;
+  CEREBRAS_MODEL?: string | undefined;
+  GEMINI_MODEL?: string | undefined;
 }
 
 /**

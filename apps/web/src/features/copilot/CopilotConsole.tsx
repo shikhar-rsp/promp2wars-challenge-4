@@ -82,7 +82,9 @@ export function CopilotConsole() {
           text: res.answer,
           provider: res.provider,
           cached: res.cached,
-          route: res.route,
+          // Only attach a route when one was returned (keeps the optional
+          // property genuinely absent rather than explicitly undefined).
+          ...(res.route ? { route: res.route } : {}),
         },
       ]);
     } catch (e) {
