@@ -1,0 +1,43 @@
+name: CI
+
+# Quality gate: every push and PR must pass lint, strict typecheck, the full
+# test suite and a production build before it can be considered mergeable.
+on:
+  push:
+    branches: [main]
+  pull_request:
+    branches: [main]
+
+jobs:
+  quality:
+    name: Lint · Typecheck · Test · Build
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+
+      - uses: pnpm/action-setup@v4
+        with:
+          version: 10
+
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 20
+          cache: pnpm
+
+      - name: Install dependencies
+        run: pnpm install --frozen-lockfile
+
+      - name: Lint
+        run: pnpm lint
+
+      - name: Typecheck (strict)
+        run: pnpm typecheck
+
+      - name: Test
+        run: pnpm test
+
+      - name: Build web
+        run: pnpm --filter @atlas/web build
+        env:
+          NEXT_PUBLIC_API_URL: http://localhost:4000
+          NEXT_PUBLIC_SOCKET_URL: http://localhost:4000

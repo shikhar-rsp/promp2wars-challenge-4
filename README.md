@@ -1,5 +1,10 @@
 # ATLAS — Stadium Intelligence & Decision Platform
 
+![CI](https://github.com/shikhar-rsp/promp2wars-challenge-4/actions/workflows/ci.yml/badge.svg)
+![TypeScript](https://img.shields.io/badge/TypeScript-strict-3178c6)
+![Tests](https://img.shields.io/badge/tests-54_passing-2ea44f)
+![License](https://img.shields.io/badge/license-MIT-blue)
+
 > An AI **chief-of-staff** for FIFA World Cup 2026 stadium operations. Not a chatbot — a live stream of ranked, explainable operational **decisions**.
 
 ATLAS ingests crowd, incident and transport signals and turns them into a **Decision Feed**: each card is `Signal → Insight → Recommended Action → one-tap dispatch`, every recommendation shows the evidence that triggered it, and every AI output is auditable. Alongside it runs a context-aware, multilingual **Fan Copilot** and an **AI-resilience** layer that survives provider rate limits without human intervention.
