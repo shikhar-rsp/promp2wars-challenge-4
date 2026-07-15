@@ -122,7 +122,7 @@ const DecisionCard = memo(function DecisionCard({
           {/* Actions */}
           {decision.status === 'proposed' ? (
             <div className="mt-3 flex flex-wrap items-center gap-2">
-              <Button size="sm" disabled={busy} onClick={() => act('accepted')}>
+              <Button size="sm" disabled={busy} onClick={() => void act('accepted')}>
                 <Check className="h-3.5 w-3.5" />
                 Dispatch: {primary?.label}
                 {primary && (
@@ -131,7 +131,7 @@ const DecisionCard = memo(function DecisionCard({
                   </span>
                 )}
               </Button>
-              <Button size="sm" variant="ghost" disabled={busy} onClick={() => act('dismissed')}>
+              <Button size="sm" variant="ghost" disabled={busy} onClick={() => void act('dismissed')}>
                 <X className="h-3.5 w-3.5" />
                 Dismiss
               </Button>

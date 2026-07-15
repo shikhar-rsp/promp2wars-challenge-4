@@ -5,6 +5,9 @@ import type {
   CompletionResponse,
 } from '../types.js';
 
+/** Model identifier reported by the offline simulator. */
+const MODEL = 'atlas-sim-v1';
+
 /**
  * Zero-dependency, offline provider of last resort.
  *
@@ -25,28 +28,27 @@ export class SimulatorProvider implements AIProvider {
     return true;
   }
 
-  async complete(request: CompletionRequest): Promise<CompletionResponse> {
+  complete(request: CompletionRequest): Promise<CompletionResponse> {
     const content = this.synthesize(request);
-    return {
+    const promptTokens = this.estimateTokens(request);
+    const completionTokens = Math.ceil(content.length / 4);
+    return Promise.resolve({
       content,
       provider: this.name,
-      model: 'atlas-sim-v1',
-      usage: {
-        promptTokens: this.estimateTokens(request),
-        completionTokens: Math.ceil(content.length / 4),
-        totalTokens: this.estimateTokens(request) + Math.ceil(content.length / 4),
-      },
+      model: MODEL,
+      usage: { promptTokens, completionTokens, totalTokens: promptTokens + completionTokens },
       cached: false,
       latencyMs: this.latencyMs,
-    };
+    });
   }
 
   async *stream(request: CompletionRequest): AsyncIterable<CompletionChunk> {
-    const content = this.synthesize(request);
+    // Reuse complete() so the streamed and buffered content stay identical.
+    const { content } = await this.complete(request);
     for (const word of content.split(' ')) {
-      yield { delta: `${word} `, done: false, provider: this.name, model: 'atlas-sim-v1' };
+      yield { delta: `${word} `, done: false, provider: this.name, model: MODEL };
     }
-    yield { delta: '', done: true, provider: this.name, model: 'atlas-sim-v1' };
+    yield { delta: '', done: true, provider: this.name, model: MODEL };
   }
 
   /**

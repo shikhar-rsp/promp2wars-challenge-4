@@ -78,10 +78,7 @@ export class StadiumState {
   }
 
   /** Subscribe to a typed state event. Returns `this` for chaining. */
-  on<K extends keyof StateEvents & string>(
-    event: K,
-    listener: (...args: StateEvents[K]) => void,
-  ): this {
+  on<K extends keyof StateEvents>(event: K, listener: (...args: StateEvents[K]) => void): this {
     this.events.on(event, listener);
     return this;
   }

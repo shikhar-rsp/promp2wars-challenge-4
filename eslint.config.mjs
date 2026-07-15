@@ -6,10 +6,12 @@ import globals from 'globals';
 import tseslint from 'typescript-eslint';
 
 /**
- * Flat ESLint config for the whole monorepo. Kept intentionally focused:
- * TypeScript recommended rules for correctness, React-hooks rules for the web
- * app, and prettier last to disable stylistic conflicts (formatting is owned by
- * Prettier, linting by ESLint — no overlap).
+ * Flat ESLint config for the whole monorepo.
+ *
+ * Uses typescript-eslint's TYPE-CHECKED ruleset (via the project service), which
+ * catches a class of real defects a syntax-only linter cannot — floating
+ * promises, unsafe `any` flows, misused promises, redundant assertions. React
+ * hooks rules cover the web app; prettier is last to disable stylistic overlap.
  */
 export default tseslint.config(
   {
@@ -24,37 +26,42 @@ export default tseslint.config(
     ],
   },
   js.configs.recommended,
-  ...tseslint.configs.recommended,
+  ...tseslint.configs.recommendedTypeChecked,
   {
     files: ['**/*.{ts,tsx}'],
     languageOptions: {
       globals: { ...globals.node, ...globals.browser },
+      parserOptions: {
+        // The project service resolves each file's nearest tsconfig
+        // automatically — no per-package parser wiring needed.
+        projectService: true,
+        tsconfigRootDir: import.meta.dirname,
+      },
     },
     rules: {
-      // Unused vars are allowed when prefixed with _ (intentional discards).
       '@typescript-eslint/no-unused-vars': [
         'error',
         { argsIgnorePattern: '^_', varsIgnorePattern: '^_' },
       ],
-      // Deliberate, documented escape hatches are used sparingly; keep them
-      // honest with a warning rather than a hard error.
+      // Deliberate, documented escape hatches exist sparingly; keep them honest
+      // with a warning rather than a hard error.
       '@typescript-eslint/no-explicit-any': 'warn',
       'no-console': ['warn', { allow: ['warn', 'error'] }],
       eqeqeq: ['error', 'smart'],
     },
   },
-  // React components: enforce the rules of hooks.
   {
     files: ['apps/web/**/*.{ts,tsx}'],
     plugins: { 'react-hooks': reactHooks },
-    rules: {
-      ...reactHooks.configs.recommended.rules,
-    },
+    rules: { ...reactHooks.configs.recommended.rules },
   },
-  // Tests may use a few extra liberties.
+  // Tests + e2e run outside the build tsconfigs; lint them syntactically without
+  // requiring full type information (avoids "file not in project" noise).
   {
     files: ['**/*.test.{ts,tsx}', '**/__tests__/**', '**/e2e/**'],
+    ...tseslint.configs.disableTypeChecked,
     rules: {
+      ...tseslint.configs.disableTypeChecked.rules,
       '@typescript-eslint/no-explicit-any': 'off',
     },
   },

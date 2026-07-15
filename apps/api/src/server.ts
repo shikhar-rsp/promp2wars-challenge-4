@@ -83,7 +83,7 @@ async function bootstrap(): Promise<void> {
   const shutdown = async (): Promise<void> => {
     logger.info('shutting down');
     state.stop();
-    io.close();
+    await io.close();
     await app.close();
     process.exit(0);
   };

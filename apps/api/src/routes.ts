@@ -43,17 +43,17 @@ export interface RouteDeps {
 export function registerRoutes(app: FastifyInstance, deps: RouteDeps): void {
   const { state, copilot } = deps;
 
-  app.get('/health', async () => ({
+  app.get('/health', () => ({
     status: 'ok',
     aiLive: deps.aiIsLive,
     time: new Date().toISOString(),
   }));
 
-  app.get('/api/stadium', async () => state.snapshot());
+  app.get('/api/stadium', () => state.snapshot());
 
-  app.get('/api/crowd', async () => ({ readings: state.getReadings() }));
+  app.get('/api/crowd', () => ({ readings: state.getReadings() }));
 
-  app.get('/api/incidents', async () => ({ incidents: state.getIncidents() }));
+  app.get('/api/incidents', () => ({ incidents: state.getIncidents() }));
 
   app.post('/api/incidents', async (request, reply) => {
     const body = ReportIncidentSchema.parse(request.body);
@@ -73,7 +73,7 @@ export function registerRoutes(app: FastifyInstance, deps: RouteDeps): void {
     return reply.code(201).send({ incident: triaged });
   });
 
-  app.get('/api/decisions', async () => ({ decisions: state.getDecisions() }));
+  app.get('/api/decisions', () => ({ decisions: state.getDecisions() }));
 
   app.post('/api/decisions/:id/status', async (request, reply) => {
     const { id } = z.object({ id: z.string().min(1) }).parse(request.params);
@@ -107,7 +107,7 @@ export function registerRoutes(app: FastifyInstance, deps: RouteDeps): void {
     reply.raw.end();
   });
 
-  app.get('/api/metrics', async () => ({
+  app.get('/api/metrics', () => ({
     providers: state.aiMetrics(),
     cache: state.cacheStats(),
   }));

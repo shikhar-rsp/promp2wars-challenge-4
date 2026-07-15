@@ -24,7 +24,7 @@ export function OpsMetrics() {
 
   useEffect(() => {
     let active = true;
-    const load = () =>
+    const load = (): void => {
       api
         .metrics()
         .then((m) => {
@@ -33,6 +33,7 @@ export function OpsMetrics() {
           setCache(m.cache);
         })
         .catch(() => undefined);
+    };
     load();
     const id = setInterval(load, 5000);
     return () => {
