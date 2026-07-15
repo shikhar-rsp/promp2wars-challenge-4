@@ -47,7 +47,7 @@ export class GeminiProvider implements AIProvider {
     this.apiKey = options.apiKey;
     this.model = options.model ?? 'gemini-2.0-flash';
     this.fetchImpl = options.fetchImpl ?? fetch;
-    this.timeoutMs = options.requestTimeoutMs ?? 20_000;
+    this.timeoutMs = options.requestTimeoutMs ?? 12_000;
   }
 
   isConfigured(): boolean {

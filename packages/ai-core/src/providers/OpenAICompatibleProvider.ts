@@ -57,7 +57,7 @@ export abstract class OpenAICompatibleProvider implements AIProvider {
       defaultModel: config.defaultModel,
       headers: config.headers ?? {},
       fetchImpl: config.fetchImpl ?? fetch,
-      requestTimeoutMs: config.requestTimeoutMs ?? 20_000,
+      requestTimeoutMs: config.requestTimeoutMs ?? 12_000,
     };
   }
 

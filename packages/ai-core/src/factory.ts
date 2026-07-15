@@ -54,7 +54,17 @@ export function createAIServiceFromEnv(env: AIEnv, fetchImpl?: typeof fetch): AI
     new SimulatorProvider(),
   ];
 
-  return new AIService({ providers, promptGuard: new PromptGuard() });
+  return new AIService({
+    providers,
+    promptGuard: new PromptGuard(),
+    // ATLAS serves interactive endpoints, so a failing provider must fail over
+    // FAST rather than exhaust a long retry budget. With a 12s per-request
+    // timeout, one retry caps a dead provider at ~24s before the next provider
+    // (or the instant simulator) takes over, and the breaker opens after two
+    // failures so subsequent requests skip it entirely.
+    retry: { maxAttempts: 2 },
+    circuit: { threshold: 2, cooldownMs: 20_000 },
+  });
 }
 
 /** True when at least one real (non-simulator) provider has credentials. */
